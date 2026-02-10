@@ -448,6 +448,7 @@ class SmtLibParser(object):
                             're.*':self._operator_adapter(mgr.ReKleeneStar),
                             're.+':self._operator_adapter(mgr.ReKleenePlus),
                             're.opt':self._operator_adapter(mgr.ReOpt),
+                            're.diff':self._operator_adapter(mgr.ReDiff),
                             're.union':self._operator_adapter(mgr.ReUnion),
                             're.inter':self._operator_adapter(mgr.ReInter),
                             # arrays

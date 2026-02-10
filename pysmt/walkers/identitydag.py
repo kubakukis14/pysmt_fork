@@ -248,6 +248,9 @@ class IdentityDagWalker(DagWalker):
 
     def walk_re_opt(self, formula, args, **kwargs):
         return self.mgr.ReOpt(args[0])
+    
+    def walk_re_diff(self, formula, args, **kwargs):
+        return self.mgr.ReDiff(args[0], args[1])
 
     def walk_re_union(self, formula, args, **kwargs):
         return self.mgr.ReUnion(args[0], args[1])

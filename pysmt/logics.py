@@ -604,6 +604,13 @@ QF_SLIA = Logic(name="QF_SLIA",
                 strings=True)
 
 
+QF_S = Logic(name="QF_S",
+             description=\
+             """Quantifier-free theory of strings.""",
+             quantifier_free=True,
+             strings=True)
+
+
 QF_AUFBVLIRA = Logic(name="QF_AUFBVLIRA",
                      description=\
                      """Quantifier free Arrays, Bitvectors and LIRA""",
@@ -650,7 +657,8 @@ SMTLIB2_LOGICS = frozenset([ AUFLIA,
                              QF_UFNRA,
                              QF_UFNIA,
                              QF_UFLIRA,
-                             QF_SLIA
+                             QF_SLIA,
+                             QF_S
                          ])
 
 LOGICS = SMTLIB2_LOGICS | frozenset([ QF_BOOL, BOOL, QF_AUFBVLIRA])
@@ -664,7 +672,7 @@ PYSMT_LOGICS = frozenset([QF_BOOL, QF_IDL, QF_LIA, QF_LRA, QF_RDL, QF_UF, QF_UFI
                           QF_UFLIA, QF_UFLRA, QF_UFLIRA,
                           BOOL, LRA, LIA, UFLIRA, UFLRA,
                           QF_BV, QF_UFBV,
-                          QF_SLIA,
+                          QF_SLIA, QF_S,
                           QF_BV, QF_UFBV,
                           QF_ABV, QF_AUFBV, QF_AUFLIA, QF_ALIA, QF_AX,
                           QF_AUFBVLIRA,

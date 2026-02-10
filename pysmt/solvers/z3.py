@@ -137,7 +137,7 @@ class Z3Options(SolverOptions):
 class Z3Solver(IncrementalTrackingSolver, UnsatCoreSolver,
                SmtLibBasicSolver, SmtLibIgnoreMixin):
 
-    LOGICS = PYSMT_LOGICS - set(x for x in PYSMT_LOGICS if x.theory.strings)
+    LOGICS = PYSMT_LOGICS  # Z3 now supports strings and regex
     OptionsClass = Z3Options
 
     def __init__(self, environment, logic, **options):
@@ -364,6 +364,32 @@ class Z3Converter(Converter, DagWalker):
             z3.Z3_OP_EQ : self._back_z3_eq,
             z3.Z3_OP_UMINUS : self._back_z3_uminus,
             z3.Z3_OP_CONST_ARRAY : self._back_z3_const_array,
+            # String operations
+            z3.Z3_OP_SEQ_CONCAT: lambda args, expr: self.mgr.StrConcat(*args),
+            z3.Z3_OP_SEQ_LENGTH: lambda args, expr: self.mgr.StrLength(args[0]),
+            z3.Z3_OP_SEQ_CONTAINS: lambda args, expr: self.mgr.StrContains(args[0], args[1]),
+            z3.Z3_OP_SEQ_INDEX: lambda args, expr: self.mgr.StrIndexOf(args[0], args[1], args[2]),
+            z3.Z3_OP_SEQ_REPLACE: lambda args, expr: self.mgr.StrReplace(args[0], args[1], args[2]),
+            z3.Z3_OP_SEQ_EXTRACT: lambda args, expr: self.mgr.StrSubstr(args[0], args[1], args[2]),
+            z3.Z3_OP_SEQ_PREFIX: lambda args, expr: self.mgr.StrPrefixOf(args[0], args[1]),
+            z3.Z3_OP_SEQ_SUFFIX: lambda args, expr: self.mgr.StrSuffixOf(args[0], args[1]),
+            z3.Z3_OP_STR_TO_INT: lambda args, expr: self.mgr.StrToInt(args[0]),
+            z3.Z3_OP_INT_TO_STR: lambda args, expr: self.mgr.IntToStr(args[0]),
+            z3.Z3_OP_SEQ_AT: lambda args, expr: self.mgr.StrCharAt(args[0], args[1]),
+            # Regex operations
+            z3.Z3_OP_SEQ_TO_RE: lambda args, expr: self.mgr.StrToRe(args[0]),
+            z3.Z3_OP_SEQ_IN_RE: lambda args, expr: self.mgr.StrInRe(args[0], args[1]),
+            z3.Z3_OP_RE_CONCAT: lambda args, expr: self.mgr.ReConcat(*args),
+            z3.Z3_OP_RE_STAR: lambda args, expr: self.mgr.ReKleeneStar(args[0]),
+            z3.Z3_OP_RE_PLUS: lambda args, expr: self.mgr.ReKleenePlus(args[0]),
+            z3.Z3_OP_RE_OPTION: lambda args, expr: self.mgr.ReOpt(args[0]),
+            z3.Z3_OP_RE_UNION: lambda args, expr: self.mgr.ReUnion(args[0], args[1]),
+            z3.Z3_OP_RE_INTERSECT: lambda args, expr: self.mgr.ReInter(args[0], args[1]),
+            z3.Z3_OP_RE_DIFF: lambda args, expr: self.mgr.ReDiff(args[0], args[1]),
+            z3.Z3_OP_RE_RANGE: lambda args, expr: self.mgr.ReRange(args[0], args[1]),
+            z3.Z3_OP_RE_FULL_SET: lambda args, expr: self.mgr.ReAll(),
+            z3.Z3_OP_RE_FULL_CHAR_SET: lambda args, expr: self.mgr.ReAllchar(),
+            z3.Z3_OP_RE_EMPTY_SET: lambda args, expr: self.mgr.ReNone(),
         }
         # Unique reference to Sorts
         self.z3RealSort = z3.RealSort(self.ctx)
@@ -430,10 +456,18 @@ class Z3Converter(Converter, DagWalker):
                 return z3.ArrayRef
             elif type_.is_bv_type():
                 return z3.BitVecRef
+            elif type_.is_string_type():
+                return z3.SeqRef
+            elif type_.is_regex_type():
+                return z3.ReRef
             else:
                 raise NotImplementedError(formula)
         elif formula.node_type() in op.ARRAY_OPERATORS:
             return z3.ArrayRef
+        elif formula.node_type() in op.STR_OPERATORS:
+            return z3.SeqRef if formula.get_type().is_string_type() else z3.BoolRef
+        elif formula.node_type() in op.REGEX_OPERATORS:
+            return z3.ReRef
         elif formula.is_ite():
             child = formula.arg(1)
             return self.get_z3_ref(child)
@@ -448,6 +482,10 @@ class Z3Converter(Converter, DagWalker):
                 return z3.ArrayRef
             elif type_.is_bv_type():
                 return z3.BitVecRef
+            elif type_.is_string_type():
+                return z3.SeqRef
+            elif type_.is_regex_type():
+                return z3.ReRef
             else:
                 raise NotImplementedError(formula)
 
@@ -520,6 +558,9 @@ class Z3Converter(Converter, DagWalker):
                 n = expr.as_long()
                 w = expr.size()
                 return self.mgr.BV(n, w)
+            elif z3.is_string_value(expr):
+                # String constant
+                return self.mgr.String(expr.as_string())
             elif z3.is_as_array(expr):
                 if model is None:
                     raise NotImplementedError("As-array expressions cannot be" \
@@ -624,9 +665,9 @@ class Z3Converter(Converter, DagWalker):
         elif symbol_type.is_array_type():
             sort_ast = self._type_to_z3(symbol_type).ast
         elif symbol_type.is_string_type():
-            raise ConvertExpressionError(message=("Unsupported string symbol: %s" %
-                                                  str(formula)),
-                                         expression=formula)
+            sort_ast = self._type_to_z3(symbol_type).ast
+        elif symbol_type.is_regex_type():
+            sort_ast = self._type_to_z3(symbol_type).ast
         else:
             sort_ast = self._type_to_z3(symbol_type).ast
         # Create const with given sort
@@ -835,6 +876,153 @@ class Z3Converter(Converter, DagWalker):
             z3.Z3_inc_ref(self.ctx.ref(), z3term)
         return z3term
 
+    # String operations
+    def walk_str_constant(self, formula, **kwargs):
+        value = formula.constant_value()
+        z3term = z3.StringVal(value, self.ctx).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_str_length(self, formula, args, **kwargs):
+        z3term = z3.Length(z3.SeqRef(args[0], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_str_concat(self, formula, args, **kwargs):
+        z3_args = [z3.SeqRef(a, self.ctx) for a in args]
+        z3term = z3.Concat(*z3_args).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_str_contains(self, formula, args, **kwargs):
+        z3term = z3.Contains(z3.SeqRef(args[0], self.ctx), 
+                            z3.SeqRef(args[1], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_str_indexof(self, formula, args, **kwargs):
+        z3term = z3.IndexOf(z3.SeqRef(args[0], self.ctx),
+                           z3.SeqRef(args[1], self.ctx),
+                           z3.ArithRef(args[2], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_str_replace(self, formula, args, **kwargs):
+        z3term = z3.Replace(z3.SeqRef(args[0], self.ctx),
+                           z3.SeqRef(args[1], self.ctx),
+                           z3.SeqRef(args[2], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_str_substr(self, formula, args, **kwargs):
+        z3term = z3.SubString(z3.SeqRef(args[0], self.ctx),
+                             z3.ArithRef(args[1], self.ctx),
+                             z3.ArithRef(args[2], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_str_prefixof(self, formula, args, **kwargs):
+        z3term = z3.PrefixOf(z3.SeqRef(args[0], self.ctx),
+                            z3.SeqRef(args[1], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_str_suffixof(self, formula, args, **kwargs):
+        z3term = z3.SuffixOf(z3.SeqRef(args[0], self.ctx),
+                            z3.SeqRef(args[1], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_str_to_int(self, formula, args, **kwargs):
+        z3term = z3.StrToInt(z3.SeqRef(args[0], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_int_to_str(self, formula, args, **kwargs):
+        z3term = z3.IntToStr(z3.ArithRef(args[0], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_str_charat(self, formula, args, **kwargs):
+        z3term = z3.SubString(z3.SeqRef(args[0], self.ctx),
+                             z3.ArithRef(args[1], self.ctx),
+                             z3.IntVal(1, self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    # Regex operations
+    def walk_str_to_re(self, formula, args, **kwargs):
+        z3term = z3.Re(z3.SeqRef(args[0], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_str_in_re(self, formula, args, **kwargs):
+        z3term = z3.InRe(z3.SeqRef(args[0], self.ctx),
+                        z3.ReRef(args[1], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_re_all(self, formula, **kwargs):
+        z3term = z3.Full(z3.ReSort(z3.StringSort(self.ctx))).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_re_allchar(self, formula, **kwargs):
+        z3term = z3.AllChar(z3.ReSort(z3.StringSort(self.ctx))).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_re_none(self, formula, **kwargs):
+        z3term = z3.Empty(z3.ReSort(z3.StringSort(self.ctx))).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_re_range(self, formula, args, **kwargs):
+        z3term = z3.Range(z3.SeqRef(args[0], self.ctx),
+                         z3.SeqRef(args[1], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_re_concat(self, formula, args, **kwargs):
+        z3_args = [z3.ReRef(a, self.ctx) for a in args]
+        z3term = z3.Concat(*z3_args).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_re_kleene_star(self, formula, args, **kwargs):
+        z3term = z3.Star(z3.ReRef(args[0], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_re_kleene_plus(self, formula, args, **kwargs):
+        z3term = z3.Plus(z3.ReRef(args[0], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_re_opt(self, formula, args, **kwargs):
+        z3term = z3.Option(z3.ReRef(args[0], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_re_union(self, formula, args, **kwargs):
+        z3term = z3.Union(z3.ReRef(args[0], self.ctx),
+                         z3.ReRef(args[1], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_re_inter(self, formula, args, **kwargs):
+        z3term = z3.Intersect(z3.ReRef(args[0], self.ctx),
+                             z3.ReRef(args[1], self.ctx)).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
+    def walk_re_diff(self, formula, args, **kwargs):
+        # Z3 doesn't have native Diff, express as r1 & complement(r2)
+        z3term = z3.Intersect(z3.ReRef(args[0], self.ctx),
+                             z3.Complement(z3.ReRef(args[1], self.ctx))).ast
+        z3.Z3_inc_ref(self.ctx.ref(), z3term)
+        return z3term
+
     def _z3_to_type(self, sort):
         if sort.kind() == z3.Z3_BOOL_SORT:
             return types.BOOL
@@ -847,6 +1035,10 @@ class Z3Converter(Converter, DagWalker):
                                    self._z3_to_type(sort.range()))
         elif sort.kind() == z3.Z3_BV_SORT:
             return types.BVType(sort.size())
+        elif sort.kind() == z3.Z3_SEQ_SORT:
+            return types.STRING
+        elif sort.kind() == z3.Z3_RE_SORT:
+            return types.REGEX
         else:
             raise NotImplementedError("Unsupported sort in conversion: %s" % sort)
 
@@ -912,6 +1104,10 @@ class Z3Converter(Converter, DagWalker):
             return self.z3ArraySort(key_sort, val_sort)
         elif tp.is_bv_type():
             return self.z3BitVecSort(tp.width)
+        elif tp.is_string_type():
+            return z3.StringSort(self.ctx)
+        elif tp.is_regex_type():
+            return z3.ReSort(z3.StringSort(self.ctx))
         else:
             assert tp.is_custom_type(), "Unsupported type '%s'" % tp
             return self.z3Sort(tp)

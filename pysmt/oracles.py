@@ -178,15 +178,19 @@ class TheoryOracle(walkers.DagWalker):
     @walkers.handles(op.BV_OPERATORS)
     @walkers.handles(op.STR_OPERATORS -\
                      set([op.STR_LENGTH, op.STR_INDEXOF, op.STR_TO_INT]))
+    @walkers.handles(op.REGEX_OPERATORS)
     @walkers.handles(op.ITE, op.ARRAY_SELECT, op.ARRAY_STORE, op.MINUS)
     def walk_combine(self, formula, args, **kwargs):
         """Combines the current theory value of the children"""
         #pylint: disable=unused-argument
-        if len(args) == 1:
+        if len(args) == 0:
+            theory_out = Theory(strings=True)
+        elif len(args) == 1:
             return args[0].copy()
-        theory_out = args[0]
-        for t in args[1:]:
-            theory_out = theory_out.combine(t)
+        else:
+            theory_out = args[0]
+            for t in args[1:]:
+                theory_out = theory_out.combine(t)
         return theory_out
 
     @walkers.handles(op.REAL_CONSTANT, op.BOOL_CONSTANT)

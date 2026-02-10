@@ -259,13 +259,13 @@ class SmtPrinter(TreeWalker):
         self.write(")")
 
     def walk_re_all(self,formula, **kwargs):
-        self.write("( re.all )" )
+        self.write("re.all" )
 
     def walk_re_allchar(self,formula, **kwargs):
-        self.write("( re.allchar )" )
+        self.write("re.allchar" )
 
     def walk_re_none(self,formula, **kwargs):
-        self.write("( re.none )" )
+        self.write("re.none" )
 
     def walk_re_range(self,formula, **kwargs):
         self.write("( re.range " )
@@ -298,6 +298,13 @@ class SmtPrinter(TreeWalker):
 
     def walk_re_union(self,formula, **kwargs):
         self.write("( re.union " )
+        self.walk(formula.arg(0))
+        self.write(" ")
+        self.walk(formula.arg(1))
+        self.write(")")
+
+    def walk_re_diff(self,formula, **kwargs):
+        self.write("( re.diff " )
         self.walk(formula.arg(0))
         self.write(" ")
         self.walk(formula.arg(1))
@@ -669,13 +676,13 @@ class SmtDagPrinter(DagWalker):
         return "( str.in.re %s %s )" % (args[0], args[1])
 
     def walk_re_all(self,formula, args, **kwargs):
-        return "( re.all )"
+        return "re.all"
 
     def walk_re_allchar(self,formula, args, **kwargs):
-        return "( re.allchar )"
+        return "re.allchar"
 
     def walk_re_none(self,formula, args, **kwargs):
-        return "( re.none )"
+        return "re.none"
 
     def walk_re_range(self,formula, args, **kwargs):
         return "( re.range %s %s )" % (args[0], args[1])
@@ -701,6 +708,9 @@ class SmtDagPrinter(DagWalker):
 
     def walk_re_union(self,formula, args, **kwargs):
         return "( re.union %s %s )" % (args[0], args[1])
+    
+    def walk_re_diff(self,formula, args, **kwargs):
+        return "( re.diff %s %s )" % (args[0], args[1])
     
     def walk_re_inter(self,formula, args, **kwargs):
         return "( re.inter %s %s )" % (args[0], args[1])

@@ -982,49 +982,64 @@ class Simplifier(pysmt.walkers.DagWalker):
 
     def walk_str_to_re(self, formula, args, **kwargs):
         s = args[0]
-        if s.is_string_constant():
-            raise NotImplementedError
+        # if s.is_string_constant():
+            # Skip simplification for string constants - not implemented yet
+            # pass
         return self.manager.StrToRe(s)
 
     def walk_str_in_re(self, formula, args, **kwargs):
         s, r = args
-        if s.is_string_constant() and r.is_regex_constant():
-            raise NotImplementedError
+        # if s.is_string_constant() and r.is_regex_constant():
+            # Skip simplification for constants - not implemented yet
+            # pass
         return self.manager.StrInRe(s, r)
 
     def walk_re_concat(self, formula, args, **kwargs):
-        if any(r.is_regex_constant() in args):
-            raise NotImplementedError
+        # if any(r.is_regex_constant() for r in args):
+            # Skip simplification for regex constants - not implemented yet
+            # pass
         return self.manager.ReConcat(*args)
 
     def walk_re_kleene_star(self, formula, args, **kwargs):
         r = args[0]
-        if r.is_regex_constant():
-            raise NotImplementedError
+        # if r.is_regex_constant():
+            # Skip simplification for regex constants - not implemented yet
+            # pass
         return self.manager.ReKleeneStar(r)
 
     def walk_re_kleene_plus(self, formula, args, **kwargs):
         r = args[0]
-        if r.is_regex_constant():
-            raise NotImplementedError
+        # if r.is_regex_constant():
+            # Skip simplification for regex constants - not implemented yet
+            # pass
         return self.manager.ReKleenePlus(r)
 
     def walk_re_opt(self, formula, args, **kwargs):
         r = args[0]
-        if r.is_regex_constant():
-            raise NotImplementedError
+        # if r.is_regex_constant():
+            # Skip simplification for regex constants - not implemented yet
+            # pass
         return self.manager.ReOpt(r)
+    
+    def walk_re_diff(self, formula, args, **kwargs):
+        r1, r2 = args
+        # if r1.is_regex_constant() and r2.is_regex_constant():
+            # Skip simplification for regex constants - not implemented yet
+            # pass
+        return self.manager.ReDiff(r1, r2)
 
     def walk_re_union(self, formula, args, **kwargs):
         r1, r2 = args
-        if r1.is_regex_constant() and r2.is_regex_constant():
-            raise NotImplementedError
+        # if r1.is_regex_constant() and r2.is_regex_constant():
+        #     Skip simplification for regex constants - not implemented yet
+        #     pass
         return self.manager.ReUnion(r1, r2)
 
     def walk_re_inter(self, formula, args, **kwargs):
         r1, r2 = args
-        if r1.is_regex_constant() and r2.is_regex_constant():
-            raise NotImplementedError
+        # if r1.is_regex_constant() and r2.is_regex_constant():
+            # Skip simplification for regex constants - not implemented yet
+            # pass
         return self.manager.ReInter(r1, r2)
 
     def walk_int_to_str(self, formula, args, **kwargs):

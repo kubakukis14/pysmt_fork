@@ -205,6 +205,7 @@ class HRLexer(Lexer):
             Rule(r"(re\.\*)", FunctionCallAdapter(self.mgr.ReKleeneStar, 100), False), # re_kleene_star
             Rule(r"(re\.\+)", FunctionCallAdapter(self.mgr.ReKleenePlus, 100), False), # re_kleene_plus
             Rule(r"(re\.opt)", FunctionCallAdapter(self.mgr.ReOpt, 100), False), # re_opt
+            Rule(r"(re\.diff)", FunctionCallAdapter(self.mgr.ReDiff, 100), False), # re_diff
             Rule(r"(re\.union)", FunctionCallAdapter(self.mgr.ReUnion, 100), False), # re_union
             Rule(r"(re\.inter)", FunctionCallAdapter(self.mgr.ReInter, 100), False), # re_inter
             Rule(r"'(.*?)'", self.identifier, True), # quoted identifiers
