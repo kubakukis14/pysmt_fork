@@ -996,6 +996,29 @@ class FormulaManager(object):
         """
         return self.create_node(node_type=op.STR_TO_INT, args=(s,))
 
+    def IntToStr(self, x):
+        """Returns the corresponding String representing the natural number x.
+
+        where x is an integer term. If x is not a natural number it
+        returns the empty String.
+        """
+        return self.create_node(node_type=op.INT_TO_STR, args=(x, ))
+
+    def StrToReal(self, s):
+        """Returns the corresponding non-negative real number of s.
+
+        If s does not represent a non-negative real number, it returns -1.
+        """
+        return self.create_node(node_type=op.STR_TO_REAL, args=(s,))
+
+    def RealToStr(self, x, p):
+        """Returns the corresponding String representing the non-negative real number x with precision p.
+
+        where x is a real term and p is an int term. If x is negative number it
+        returns the empty String.
+        """
+        return self.create_node(node_type=op.REAL_TO_STR, args=(x, p))
+
     def StrToRe(self, s):
         """Returns the corresponding Regex that accept s.
 
@@ -1084,14 +1107,6 @@ class FormulaManager(object):
         where r1 and r2 are RegEx terms defined over a certain sort
         """
         return self.create_node(node_type=op.RE_INTER, args=(r1, r2))
-
-    def IntToStr(self, x):
-        """Returns the corresponding String representing the natural number x.
-
-        where x is an integer term. If x is not a natural number it
-        returns the empty String.
-        """
-        return self.create_node(node_type=op.INT_TO_STR, args=(x, ))
 
     def StrCharAt(self, s, i):
         """Returns a single character String at position i.

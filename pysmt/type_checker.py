@@ -123,6 +123,20 @@ class SimpleTypeChecker(walkers.DagWalker):
         #pylint: disable=unused-argument
         return self.walk_type_to_type(formula, args, INT, STRING)
 
+    @walkers.handles(op.STR_TO_REAL)
+    def walk_str_to_real(self, formula, args, **kwargs):
+        #pylint: disable=unused-argument
+        return self.walk_type_to_type(formula, args, STRING, REAL)
+
+    @walkers.handles(op.REAL_TO_STR)
+    def walk_real_to_str(self, formula, args, **kwargs):
+        assert formula is not None
+        if len(args) == 2 and \
+           args[0].is_real_type() and \
+           args[1].is_int_type():
+            return STRING
+        return None
+
     def walk_bv_comp(self, formula, args, **kwargs):
         # We check that all children are BV and the same size
         a,b = args

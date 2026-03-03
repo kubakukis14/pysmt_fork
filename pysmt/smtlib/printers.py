@@ -242,17 +242,34 @@ class SmtPrinter(TreeWalker):
         self.write(")")
 
     def walk_str_to_int(self,formula, **kwargs):
-        self.write("( str.to.int " )
+        self.write("( str.to_int " )
         self.walk(formula.arg(0))
         self.write(")")
 
+    def walk_int_to_str(self,formula, **kwargs):
+        self.write("( str.from_int " )
+        self.walk(formula.arg(0))
+        self.write(")")
+
+    def walk_str_to_real(self,formula, **kwargs):
+        self.write("( str.to_real " )
+        self.walk(formula.arg(0))
+        self.write(")")
+
+    def walk_real_to_str(self,formula, **kwargs):
+        self.write("( str.from_real " )
+        self.walk(formula.arg(0))
+        self.write(" ")
+        self.walk(formula.arg(1))
+        self.write(")")
+
     def walk_str_to_re(self,formula, **kwargs):
-        self.write("( str.to.re " )
+        self.write("( str.to_re " )
         self.walk(formula.arg(0))
         self.write(")") 
 
     def walk_str_in_re(self,formula, **kwargs):
-        self.write("( str.in.re " )
+        self.write("( str.in_re " )
         self.walk(formula.arg(0))
         self.write(" ")
         self.walk(formula.arg(1))
@@ -315,11 +332,6 @@ class SmtPrinter(TreeWalker):
         self.walk(formula.arg(0))
         self.write(" ")
         self.walk(formula.arg(1))
-        self.write(")")
-
-    def walk_int_to_str(self,formula, **kwargs):
-        self.write("( int.to.str " )
-        self.walk(formula.arg(0))
         self.write(")")
 
     def walk_array_value(self, formula):
@@ -667,13 +679,22 @@ class SmtDagPrinter(DagWalker):
         return "( str.suffixof %s %s )" % (args[0], args[1])
 
     def walk_str_to_int(self,formula, args, **kwargs):
-        return "( str.to.int %s )" % args[0]
+        return "( str.to_int %s )" % args[0]
+    
+    def walk_int_to_str(self,formula, args, **kwargs):
+        return "( str.from_int %s )" % args[0]
+
+    def walk_str_to_real(self,formula, args, **kwargs):
+        return "( str.to_real %s )" % args[0]
+    
+    def walk_real_to_str(self,formula, args, **kwargs):
+        return "( str.from_real %s %s )" % (args[0], args[1])
     
     def walk_str_to_re(self,formula, args, **kwargs):
-        return "( str.to.re %s )" % args[0]
+        return "( str.to_re %s )" % args[0]
 
     def walk_str_in_re(self,formula, args, **kwargs):
-        return "( str.in.re %s %s )" % (args[0], args[1])
+        return "( str.in_re %s %s )" % (args[0], args[1])
 
     def walk_re_all(self,formula, args, **kwargs):
         return "re.all"
@@ -714,9 +735,6 @@ class SmtDagPrinter(DagWalker):
     
     def walk_re_inter(self,formula, args, **kwargs):
         return "( re.inter %s %s )" % (args[0], args[1])
-    
-    def walk_int_to_str(self,formula, args, **kwargs):
-        return "( int.to.str %s )" % args[0]
 
     def walk_array_value(self, formula, args, **kwargs):
         sym = self._new_symbol()

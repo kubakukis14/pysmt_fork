@@ -190,11 +190,13 @@ class HRLexer(Lexer):
             Rule(r"(str\.substr)", FunctionCallAdapter(self.mgr.StrSubstr, 100), False), # str_substr
             Rule(r"(str\.prefixof)", FunctionCallAdapter(self.mgr.StrPrefixOf, 100), False), # str_prefixof
             Rule(r"(str\.suffixof)", FunctionCallAdapter(self.mgr.StrSuffixOf, 100), False), # str_suffixof
-            Rule(r"(str\.to\.int)", FunctionCallAdapter(self.mgr.StrToInt, 100), False), # str_to_int
-            Rule(r"(int\.to\.str)", FunctionCallAdapter(self.mgr.IntToStr, 100), False), # int_to_str
+            Rule(r"(str\.to_int)", FunctionCallAdapter(self.mgr.StrToInt, 100), False), # str_to_int
+            Rule(r"(str\.from_int)", FunctionCallAdapter(self.mgr.IntToStr, 100), False), # int_to_str
+            Rule(r"(str\.to_real)", FunctionCallAdapter(self.mgr.StrToReal, 100), False),
+            Rule(r"(str\.from_real)", FunctionCallAdapter(self.mgr.RealToStr, 100), False),
             Rule(r"(bv2nat)", UnaryOpAdapter(self.mgr.BVToNatural, 100), False), # bv2nat
-            Rule(r"(str\.to\.re)", FunctionCallAdapter(self.mgr.StrToRe, 100), False), # str_to_re
-            Rule(r"(str\.in\.re)", FunctionCallAdapter(self.mgr.StrInRe, 100), False), # str_in_re
+            Rule(r"(str\.to_re)", FunctionCallAdapter(self.mgr.StrToRe, 100), False), # str_to_re
+            Rule(r"(str\.in_re)", FunctionCallAdapter(self.mgr.StrInRe, 100), False), # str_in_re
             Rule(r"(re\.range)", FunctionCallAdapter(self.mgr.ReRange, 100), False), # re_range
             Rule(r"(re\.\+\+)", FunctionCallAdapter(self.mgr.ReConcat, 100), False), # re_concat
             # TODO: FunctionCalls or Constants?

@@ -247,17 +247,34 @@ class HRPrinter(TreeWalker):
         self.write(")")
 
     def walk_str_to_int(self,formula, **kwargs):
-        self.write("str.to.int(" )
+        self.write("str.to_int(" )
         self.walk(formula.arg(0))
         self.write(")")
 
+    def walk_int_to_str(self,formula, **kwargs):
+        self.write("str.from_int(" )
+        self.walk(formula.arg(0))
+        self.write(")")
+
+    def walk_str_to_real(self,formula, **kwargs):
+        self.write("str.to_real(" )
+        self.walk(formula.arg(0))
+        self.write(")")
+
+    def walk_real_to_str(self,formula, **kwargs):
+        self.write("str.from_real(" )
+        self.walk(formula.arg(0))
+        self.write(", ")
+        self.walk(formula.arg(1))
+        self.write(")")
+
     def walk_str_to_re(self, formula, **kwargs):
-        self.write("str.to.re(" )
+        self.write("str.to_re(" )
         self.walk(formula.arg(0))
         self.write(")")
 
     def walk_str_in_re(self, formula, **kwargs):
-        self.write("str.in.re(" )
+        self.write("str.in_re(" )
         self.walk(formula.arg(0))
         self.write(", ")
         self.walk(formula.arg(1))
@@ -321,11 +338,6 @@ class HRPrinter(TreeWalker):
         self.walk(formula.arg(0))
         self.write(", ")
         self.walk(formula.arg(1))
-        self.write(")")
-    
-    def walk_int_to_str(self,formula, **kwargs):
-        self.write("int.to.str(" )
-        self.walk(formula.arg(0))
         self.write(")")
 
     def walk_array_select(self, formula):

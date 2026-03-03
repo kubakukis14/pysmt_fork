@@ -980,6 +980,28 @@ class Simplifier(pysmt.walkers.DagWalker):
                 return self.manager.Int(-1)
         return self.manager.StrToInt(s)
 
+    def walk_int_to_str(self, formula, args, **kwargs):
+        i = args[0]
+        if i.is_int_constant():
+            if i.constant_value() < 0:
+                return self.manager.String("")
+            return self.manager.String(str(i.constant_value()))
+        return self.manager.IntToStr(i)
+
+    def walk_str_to_real(self, formula, args, **kwargs):
+        s = args[0]
+        if s.is_string_constant():
+            pass # not implemented yet
+        return self.manager.StrToReal(s)
+
+    def walk_real_to_str(self, formula, args, **kwargs):
+        r, p = args
+        if r.is_real_constant() and p.is_int_constant():
+            if r.constant_value() < 0 or p.constant_value() < 0:
+                return self.manager.String("")
+            pass # not implemented yet
+        return self.manager.RealToStr(r, p)
+
     def walk_str_to_re(self, formula, args, **kwargs):
         s = args[0]
         # if s.is_string_constant():
@@ -1041,14 +1063,6 @@ class Simplifier(pysmt.walkers.DagWalker):
             # Skip simplification for regex constants - not implemented yet
             # pass
         return self.manager.ReInter(r1, r2)
-
-    def walk_int_to_str(self, formula, args, **kwargs):
-        i = args[0]
-        if i.is_int_constant():
-            if i.constant_value() < 0:
-                return self.manager.String("")
-            return self.manager.String(str(i.constant_value()))
-        return self.manager.IntToStr(i)
 
     def walk_bv_tonatural(self, formula, args, **kwargs):
         if args[0].is_bv_constant():
