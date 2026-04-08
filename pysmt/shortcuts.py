@@ -851,6 +851,21 @@ def IntToStr(x):
     """
     return get_env().formula_manager.IntToStr(x)
 
+def StrToReal(x):
+    """Returns the corresponding non-negative real number of s.
+
+    If s does not represent a non-negative real number, it returns -1.
+    """
+    return get_env().formula_manager.StrToReal(x)
+
+def RealToStr(x, p):
+    """Returns the corresponding String representing the non-negative real number x with precision p.
+
+    where x is a real term and p is an int term. If x is negative number it
+    returns the empty String.
+    """
+    return get_env().formula_manager.RealToStr(x, p)
+
 #
 # Arrays
 #
