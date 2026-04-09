@@ -284,6 +284,19 @@ class Logic(object):
 
 # Logics
 
+ALL = Logic(name="ALL",
+            description=\
+            """ """,
+            arrays=True,
+            bit_vectors=True,
+            integer_arithmetic=True,
+            real_arithmetic=True,
+            uninterpreted=True,
+            strings = True,
+            linear=False,
+            floating_point=True,
+            )
+
 QF_BOOL = Logic(name="QF_BOOL",
                 description=\
                 """The simplest logic: quantifier-free boolean logic.""",
@@ -661,7 +674,7 @@ SMTLIB2_LOGICS = frozenset([ AUFLIA,
                              QF_S
                          ])
 
-LOGICS = SMTLIB2_LOGICS | frozenset([ QF_BOOL, BOOL, QF_AUFBVLIRA])
+LOGICS = SMTLIB2_LOGICS | frozenset([ QF_BOOL, BOOL, QF_AUFBVLIRA, ALL])
 
 QF_LOGICS = frozenset(_l for _l in LOGICS if _l.quantifier_free)
 
@@ -677,6 +690,7 @@ PYSMT_LOGICS = frozenset([QF_BOOL, QF_IDL, QF_LIA, QF_LRA, QF_RDL, QF_UF, QF_UFI
                           QF_ABV, QF_AUFBV, QF_AUFLIA, QF_ALIA, QF_AX,
                           QF_AUFBVLIRA,
                           QF_NRA, QF_NIA, UFBV, BV,
+                          ALL,
                       ])
 
 # PySMT Logics includes additional features:
