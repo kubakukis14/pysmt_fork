@@ -223,6 +223,24 @@ class HRPrinter(TreeWalker):
         self.walk(formula.arg(2))
         self.write(")")
 
+    def walk_str_replace_re(self,formula, **kwargs):
+        self.write("str.replace_re(" )
+        self.walk(formula.arg(0))
+        self.write(", ")
+        self.walk(formula.arg(1))
+        self.write(", ")
+        self.walk(formula.arg(2))
+        self.write(")")
+
+    def walk_str_replace_re_all(self,formula, **kwargs):
+        self.write("str.replace_re_all(" )
+        self.walk(formula.arg(0))
+        self.write(", ")
+        self.walk(formula.arg(1))
+        self.write(", ")
+        self.walk(formula.arg(2))
+        self.write(")")
+
     def walk_str_substr(self,formula, **kwargs):
         self.write("str.substr(" )
         self.walk(formula.arg(0))

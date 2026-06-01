@@ -968,6 +968,20 @@ class FormulaManager(object):
         """
         return self.create_node(node_type=op.STR_REPLACE, args=(s, t1, t2))
 
+    def StrReplaceRe(self, s, r, t):
+        """Returns a new string where the first substring matching r is replaced by t.
+
+        where s and t are string terms, r is a regex term.
+        """
+        return self.create_node(node_type=op.STR_REPLACE_RE, args=(s, r, t))
+
+    def StrReplaceReAll(self, s, r, t):
+        """Returns a new string where all substrings matching r are replaced by t.
+
+        where s and t are string terms, r is a regex term.
+        """
+        return self.create_node(node_type=op.STR_REPLACE_RE_ALL, args=(s, r, t))
+
     def StrSubstr(self, s, i, j):
         """Returns a substring of s starting at i and ending at j+i.
 

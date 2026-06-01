@@ -16,12 +16,14 @@
 #   limitations under the License.
 #
 import math
+import re
 
 import pysmt.walkers
 from pysmt.walkers import handles
 import pysmt.operators as op
 import pysmt.typing as types
 from pysmt.utils import set_bit
+from pysmt.constants import Fraction
 from pysmt.exceptions import PysmtValueError
 from pysmt.fnode import FNode
 
@@ -60,6 +62,12 @@ class Simplifier(pysmt.walkers.DagWalker):
 
     def _get_key(self, formula, **kwargs):
         return formula
+    
+    def _is_re_epsilon(self, r):
+        """Check if r is the regex matching only the empty string: StrToRe("")."""
+        return (r.node_type() == op.STR_TO_RE and
+                r.arg(0).is_string_constant() and
+                r.arg(0).constant_value() == "")
 
     def walk_debug(self, formula, **kwargs):
         from pysmt.shortcuts import Equals, Iff, get_type, is_valid
@@ -950,6 +958,14 @@ class Simplifier(pysmt.walkers.DagWalker):
             return self.manager.String(s_str.replace(t1_str, t2_str, 1))
         return self.manager.StrReplace(s, t1, t2)
 
+    def walk_str_replace_re(self, formula, args, **kwargs):
+        s, r, t = args
+        return self.manager.StrReplaceRe(s, r, t)
+
+    def walk_str_replace_re_all(self, formula, args, **kwargs):
+        s, r, t = args
+        return self.manager.StrReplaceReAll(s, r, t)
+
     def walk_str_substr(self, formula, args, **kwargs):
         s, i, j = args
         if s.is_string_constant() and i.is_int_constant() and j.is_int_constant():
@@ -980,6 +996,135 @@ class Simplifier(pysmt.walkers.DagWalker):
                 return self.manager.Int(-1)
         return self.manager.StrToInt(s)
 
+    def walk_str_to_real(self, formula, args, **kwargs):
+        s = args[0]
+        if s.is_string_constant():
+            s_val = s.constant_value()
+            if re.fullmatch(r"[0-9]+(\.[0-9]+)?", s_val) is None:
+                return self.manager.Real(-1)
+            try:
+                return self.manager.Real(Fraction(s_val))
+            except (ValueError, ZeroDivisionError):
+                return self.manager.Real(-1)
+        return self.manager.StrToReal(s)
+
+    def walk_str_to_re(self, formula, args, **kwargs):
+        return self.manager.StrToRe(args[0])
+
+    def walk_str_in_re(self, formula, args, **kwargs):
+        s, r = args
+        # x in sigma* -> TRUE
+        if r.node_type() == op.RE_ALL:
+            return self.manager.TRUE()
+        # x in empty_set -> FALSE
+        if r.node_type() == op.RE_NONE:
+            return self.manager.FALSE()
+        # x in sigma -> len(s) == 1
+        if r.node_type() == op.RE_ALLCHAR and s.is_string_constant():
+            return self.manager.Bool(len(s.constant_value()) == 1)
+        # "abc" in regex("abc") -> TRUE/FALSE
+        if (s.is_string_constant() and
+                r.node_type() == op.STR_TO_RE and
+                r.arg(0).is_string_constant()):
+            return self.manager.Bool(
+                s.constant_value() == r.arg(0).constant_value())
+        return self.manager.StrInRe(s, r)
+
+    def walk_re_concat(self, formula, args, **kwargs):
+        # x . (y . z) -> x . y . z
+        flat_args = []
+        for r in args:
+            if r.node_type() == op.RE_CONCAT:
+                flat_args.extend(r.args())
+            else:
+                flat_args.append(r)
+        # x . empty_set -> empty_set
+        if any(r.node_type() == op.RE_NONE for r in flat_args):
+            return self.manager.ReNone()
+        # x . eps -> x
+        new_args = [r for r in flat_args if not self._is_re_epsilon(r)]
+        if len(new_args) == 0:
+            return self.manager.StrToRe(self.manager.String(""))
+        if len(new_args) == 1:
+            return new_args[0]
+        # "abc" . "def" -> "abcdef"
+        merged = []
+        for r in new_args:
+            if (r.node_type() == op.STR_TO_RE and
+                    r.arg(0).is_string_constant() and
+                    merged and
+                    merged[-1].node_type() == op.STR_TO_RE and
+                    merged[-1].arg(0).is_string_constant()):
+                combined = merged[-1].arg(0).constant_value() + r.arg(0).constant_value()
+                merged[-1] = self.manager.StrToRe(self.manager.String(combined))
+            else:
+                merged.append(r)
+        if len(merged) == 1:
+            return merged[0]
+        return self.manager.ReConcat(*merged)
+
+    def walk_re_kleene_star(self, formula, args, **kwargs):
+        r = args[0]
+        # (empty_set)* -> eps
+        if r.node_type() == op.RE_NONE:
+            return self.manager.StrToRe(self.manager.String(""))
+        # (sigma*)* -> sigma*
+        if r.node_type() == op.RE_ALL:
+            return self.manager.ReAll()
+        # (eps)* -> eps
+        if self._is_re_epsilon(r):
+            return r
+        # (a*)* -> a*
+        if r.node_type() == op.RE_KLEENE_STAR:
+            return r
+        return self.manager.ReKleeneStar(r)
+
+    def walk_re_union(self, formula, args, **kwargs):
+        r1, r2 = args
+        # x union sigma* -> sigma*
+        if r1.node_type() == op.RE_ALL or r2.node_type() == op.RE_ALL:
+            return self.manager.ReAll()
+        # x union empty_set -> x
+        if r1.node_type() == op.RE_NONE:
+            return r2
+        if r2.node_type() == op.RE_NONE:
+            return r1
+        # x union x -> x
+        if r1 == r2:
+            return r1
+        return self.manager.ReUnion(r1, r2)
+
+    def walk_re_inter(self, formula, args, **kwargs):
+        r1, r2 = args
+        # x intersection empty_set -> empty_set
+        if r1.node_type() == op.RE_NONE or r2.node_type() == op.RE_NONE:
+            return self.manager.ReNone()
+        # x intersection sigma* -> x
+        if r1.node_type() == op.RE_ALL:
+            return r2
+        if r2.node_type() == op.RE_ALL:
+            return r1
+        # x intersection x -> x
+        if r1 == r2:
+            return r1
+        return self.manager.ReInter(r1, r2)
+
+    def walk_re_diff(self, formula, args, **kwargs):
+        r1, r2 = args
+        # empty_set \ x -> empty_set
+        if r1.node_type() == op.RE_NONE:
+            return self.manager.ReNone()
+        # x \ empty_set -> x
+        if r2.node_type() == op.RE_NONE:
+            return r1
+        # x \ sigma* -> empty_set
+        if r2.node_type() == op.RE_ALL:
+            return self.manager.ReNone()
+        # x \ x -> empty_set
+        if r1 == r2:
+            return self.manager.ReNone()
+        return self.manager.ReDiff(r1, r2)
+
     def walk_int_to_str(self, formula, args, **kwargs):
         i = args[0]
         if i.is_int_constant():
@@ -988,81 +1133,9 @@ class Simplifier(pysmt.walkers.DagWalker):
             return self.manager.String(str(i.constant_value()))
         return self.manager.IntToStr(i)
 
-    def walk_str_to_real(self, formula, args, **kwargs):
-        s = args[0]
-        if s.is_string_constant():
-            pass # not implemented yet
-        return self.manager.StrToReal(s)
-
     def walk_real_to_str(self, formula, args, **kwargs):
-        r, p = args
-        if r.is_real_constant() and p.is_int_constant():
-            if r.constant_value() < 0 or p.constant_value() < 0:
-                return self.manager.String("")
-            pass # not implemented yet
-        return self.manager.RealToStr(r, p)
-
-    def walk_str_to_re(self, formula, args, **kwargs):
-        s = args[0]
-        # if s.is_string_constant():
-            # Skip simplification for string constants - not implemented yet
-            # pass
-        return self.manager.StrToRe(s)
-
-    def walk_str_in_re(self, formula, args, **kwargs):
-        s, r = args
-        # if s.is_string_constant() and r.is_regex_constant():
-            # Skip simplification for constants - not implemented yet
-            # pass
-        return self.manager.StrInRe(s, r)
-
-    def walk_re_concat(self, formula, args, **kwargs):
-        # if any(r.is_regex_constant() for r in args):
-            # Skip simplification for regex constants - not implemented yet
-            # pass
-        return self.manager.ReConcat(*args)
-
-    def walk_re_kleene_star(self, formula, args, **kwargs):
-        r = args[0]
-        # if r.is_regex_constant():
-            # Skip simplification for regex constants - not implemented yet
-            # pass
-        return self.manager.ReKleeneStar(r)
-
-    def walk_re_kleene_plus(self, formula, args, **kwargs):
-        r = args[0]
-        # if r.is_regex_constant():
-            # Skip simplification for regex constants - not implemented yet
-            # pass
-        return self.manager.ReKleenePlus(r)
-
-    def walk_re_opt(self, formula, args, **kwargs):
-        r = args[0]
-        # if r.is_regex_constant():
-            # Skip simplification for regex constants - not implemented yet
-            # pass
-        return self.manager.ReOpt(r)
-    
-    def walk_re_diff(self, formula, args, **kwargs):
-        r1, r2 = args
-        # if r1.is_regex_constant() and r2.is_regex_constant():
-            # Skip simplification for regex constants - not implemented yet
-            # pass
-        return self.manager.ReDiff(r1, r2)
-
-    def walk_re_union(self, formula, args, **kwargs):
-        r1, r2 = args
-        # if r1.is_regex_constant() and r2.is_regex_constant():
-        #     Skip simplification for regex constants - not implemented yet
-        #     pass
-        return self.manager.ReUnion(r1, r2)
-
-    def walk_re_inter(self, formula, args, **kwargs):
-        r1, r2 = args
-        # if r1.is_regex_constant() and r2.is_regex_constant():
-            # Skip simplification for regex constants - not implemented yet
-            # pass
-        return self.manager.ReInter(r1, r2)
+        x, p = args
+        return self.manager.RealToStr(x, p)
 
     def walk_bv_tonatural(self, formula, args, **kwargs):
         if args[0].is_bv_constant():

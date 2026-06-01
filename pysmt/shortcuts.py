@@ -815,6 +815,27 @@ def StrReplace(s, t1, t2):
     """
     return get_env().formula_manager.StrReplace(s, t1, t2)
 
+def StrReplaceRe(s, r, t):
+    """Returns a new string where the first substring matching r is replaced by t.
+
+    where s and t are string terms, r is a regex term.
+    """
+    return get_env().formula_manager.StrReplaceRe(s, r, t)
+
+def StrReplaceReAll(s, r, t):
+    """Returns a new string where all substrings matching r are replaced by t.
+
+    where s and t are string terms, r is a regex term.
+    """
+    return get_env().formula_manager.StrReplaceReAll(s, r, t)
+
+def StrReplaceAll(s, t1, t2):
+    """Returns a new string where all occurrences of t1 are replaced by t2.
+
+    where s, t1 and t2 are string terms, t1 is non-empty.
+    """
+    return get_env().formula_manager.StrReplaceAll(s, t1, t2)
+
 def StrSubstr(s, i, j):
     """Returns a substring of s starting at i and ending at j+i.
 
@@ -865,6 +886,66 @@ def RealToStr(x, p):
     returns the empty String.
     """
     return get_env().formula_manager.RealToStr(x, p)
+
+def StrToRe(x):
+    """Returns the corresponding Regex that accepts x."""
+    return get_env().formula_manager.StrToRe(x)
+
+def StrInRe(s, r):
+    """Returns whether the string is accepted by the Regex r."""
+    return get_env().formula_manager.StrInRe(s, r)
+
+# Regular Expressions
+def ReAll():
+    """Returns a constant denoting the set of all strings."""
+    return get_env().formula_manager.ReAll()
+
+def ReAllchar():
+    """Returns a constant denoting the set of all strings of length 1."""
+    return get_env().formula_manager.ReAllchar()
+
+def ReRange(s1, s2):
+    """Returns a regular expression representing strings between s1 and s2."""
+    return get_env().formula_manager.ReRange(s1, s2)
+
+def ReConcat(*args):
+    """Returns the concatenation of n Regex.
+
+    r1, r2, ..., and rn are Regex terms.
+    """
+    return get_env().formula_manager.ReConcat(*args)
+
+def ReKleeneStar(r):
+    """Returns the kleene * of the Regex r."""
+    return get_env().formula_manager.ReKleeneStar(r)
+
+def ReKleenePlus(r):
+    """Returns the kleene + of the Regex r."""
+    return get_env().formula_manager.ReKleenePlus(r)
+
+def ReOpt(r):
+    """Returns zero or one use of r."""
+    return get_env().formula_manager.ReOpt(r)
+
+def ReDiff(r1, r2):
+    """Returns the difference of the languages accepted by r1 and r2."""
+    return get_env().formula_manager.ReDiff(r1, r2)
+
+def ReUnion(r1, r2):
+    """Returns the union of the languages accepted by r1 and r2."""
+    return get_env().formula_manager.ReUnion(r1, r2)
+
+def ReInter(r1, r2):
+    """Returns the intersection of the languages accepted by r1 and r2."""
+    return get_env().formula_manager.ReInter(r1, r2)
+
+def ReLoop(r, i, j):
+    """Returns a bounded repetition of the Regex r."""
+    return get_env().formula_manager.ReLoop(r, i, j)
+
+def ReRepeat(r, n):
+    """Returns the n-times repetition of the Regex r."""
+    return get_env().formula_manager.ReRepeat(r, n)
 
 #
 # Arrays

@@ -186,6 +186,8 @@ class HRLexer(Lexer):
             Rule(r"(str\.at)", FunctionCallAdapter(self.mgr.StrCharAt, 100), False), # str_charat
             Rule(r"(str\.contains)", FunctionCallAdapter(self.mgr.StrContains, 100), False), # str_contains
             Rule(r"(str\.indexof)", FunctionCallAdapter(self.mgr.StrIndexOf, 100), False), # str_indexof
+            Rule(r"(str\.replace_re_all)", FunctionCallAdapter(self.mgr.StrReplaceReAll, 100), False), # str_replace_re_all
+            Rule(r"(str\.replace_re)", FunctionCallAdapter(self.mgr.StrReplaceRe, 100), False), # str_replace_re
             Rule(r"(str\.replace)", FunctionCallAdapter(self.mgr.StrReplace, 100), False), # str_replace
             Rule(r"(str\.substr)", FunctionCallAdapter(self.mgr.StrSubstr, 100), False), # str_substr
             Rule(r"(str\.prefixof)", FunctionCallAdapter(self.mgr.StrPrefixOf, 100), False), # str_prefixof

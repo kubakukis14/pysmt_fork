@@ -24,7 +24,7 @@ these operators.
 from itertools import chain
 
 
-ALL_TYPES = list(range(0,81))
+ALL_TYPES = list(range(0,84))
 
 (
 FORALL, EXISTS, AND, OR, NOT, IMPLIES, IFF, # Boolean Logic (0-6)
@@ -91,9 +91,12 @@ RE_OPT,                                     # Zero or one use of r (75)
 RE_UNION,                                   # Union of Regex (76)
 RE_INTER,                                   # Instersection of regex (77)
 RE_DIFF,                                    # Difference of regex (78)
+RE_LOOP,                                    # Loop of regex (79)
 
-STR_TO_REAL,                                # string to real (79)
+STR_TO_REAL,                                # string to real (80)
 REAL_TO_STR,                                # real to string (80)
+STR_REPLACE_RE,                             # Replace regex first (81)
+STR_REPLACE_RE_ALL,                         # Replace regex all (82)
 ) = ALL_TYPES
 
 QUANTIFIERS = frozenset([FORALL, EXISTS])
@@ -124,7 +127,8 @@ BV_OPERATORS = frozenset([BV_NOT, BV_AND, BV_OR, BV_XOR,
 
 STR_OPERATORS = frozenset([STR_LENGTH, STR_CONCAT, STR_INDEXOF, STR_REPLACE,
                            STR_SUBSTR, STR_CHARAT, STR_TO_INT, INT_TO_STR,
-                           STR_TO_RE, STR_IN_RE, STR_TO_REAL, REAL_TO_STR])
+                           STR_TO_RE, STR_IN_RE, STR_TO_REAL, REAL_TO_STR,
+                           STR_REPLACE_RE, STR_REPLACE_RE_ALL])
 
 REGEX_OPERATORS = frozenset([RE_ALL, RE_ALLCHAR, RE_NONE,
                              RE_RANGE, RE_CONCAT, RE_KLEENE_PLUS, RE_KLEENE_STAR,
@@ -256,6 +260,9 @@ __OP_STR__ = {
     RE_UNION: "RE_UNION",
     RE_INTER: "RE_INTER",
     RE_DIFF: "RE_DIFF",
+    RE_LOOP: "RE_LOOP",
     STR_TO_REAL: "STR_TO_REAL",
     REAL_TO_STR: "REAL_TO_STR",
+    STR_REPLACE_RE: "STR_REPLACE_RE",
+    STR_REPLACE_RE_ALL: "STR_REPLACE_RE_ALL",
 }
