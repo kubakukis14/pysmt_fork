@@ -1099,6 +1099,13 @@ class FormulaManager(object):
         """
         return self.ReUnion(r, self.StrToRe(self.String("")))
     
+    def ReLoop(self, r, lo, hi):
+        """Returns r repeated between lo and hi times (inclusive)
+
+        where r is a RegEx term and lo, hi are non-negative integers
+        """
+        return self.create_node(node_type=op.RE_LOOP, args=(r,), payload=(lo, hi))
+
     def ReDiff(self, r1, r2):
         """Returns the difference of the languages accepted by r1 and r2
 

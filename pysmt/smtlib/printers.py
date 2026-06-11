@@ -331,6 +331,12 @@ class SmtPrinter(TreeWalker):
         self.walk(formula.arg(0))
         self.write(")")
 
+    def walk_re_loop(self, formula, **kwargs):
+        lo, hi = formula._content.payload
+        self.write("( re.loop " )
+        self.walk(formula.arg(0))
+        self.write(" %d %d)" % (lo, hi))
+
     def walk_re_union(self,formula, **kwargs):
         self.write("( re.union " )
         self.walk(formula.arg(0))
@@ -750,6 +756,10 @@ class SmtDagPrinter(DagWalker):
 
     def walk_re_opt(self,formula, args, **kwargs):
         return "( re.opt %s )" % (args[0])
+
+    def walk_re_loop(self, formula, args, **kwargs):
+        lo, hi = formula._content.payload
+        return "( re.loop %s %d %d )" % (args[0], lo, hi)
 
     def walk_re_union(self,formula, args, **kwargs):
         return "( re.union %s %s )" % (args[0], args[1])

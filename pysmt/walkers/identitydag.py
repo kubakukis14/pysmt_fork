@@ -263,7 +263,11 @@ class IdentityDagWalker(DagWalker):
 
     def walk_re_opt(self, formula, args, **kwargs):
         return self.mgr.ReOpt(args[0])
-    
+
+    def walk_re_loop(self, formula, args, **kwargs):
+        lo, hi = formula._content.payload
+        return self.mgr.ReLoop(args[0], lo, hi)
+
     def walk_re_diff(self, formula, args, **kwargs):
         return self.mgr.ReDiff(args[0], args[1])
 

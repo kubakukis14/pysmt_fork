@@ -106,7 +106,7 @@ class SimpleTypeChecker(walkers.DagWalker):
         return None
 
     @walkers.handles(op.RE_CONCAT, op.RE_KLEENE_PLUS, op.RE_KLEENE_STAR)
-    @walkers.handles(op.RE_OPT, op.RE_UNION, op.RE_INTER, op.RE_DIFF)
+    @walkers.handles(op.RE_OPT, op.RE_UNION, op.RE_INTER, op.RE_DIFF, op.RE_LOOP)
     def walk_re_to_re(self, formula, args, **kwargs):
         #pylint: disable=unused-argument
         return self.walk_type_to_type(formula, args, REGEX, REGEX)
