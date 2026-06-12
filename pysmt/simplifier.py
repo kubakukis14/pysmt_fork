@@ -1031,18 +1031,11 @@ class Simplifier(pysmt.walkers.DagWalker):
         return self.manager.StrInRe(s, r)
 
     def walk_re_concat(self, formula, args, **kwargs):
-        # x . (y . z) -> x . y . z
-        flat_args = []
-        for r in args:
-            if r.node_type() == op.RE_CONCAT:
-                flat_args.extend(r.args())
-            else:
-                flat_args.append(r)
         # x . empty_set -> empty_set
-        if any(r.node_type() == op.RE_NONE for r in flat_args):
+        if any(r.node_type() == op.RE_NONE for r in args):
             return self.manager.ReNone()
         # x . eps -> x
-        new_args = [r for r in flat_args if not self._is_re_epsilon(r)]
+        new_args = [r for r in args if not self._is_re_epsilon(r)]
         if len(new_args) == 0:
             return self.manager.StrToRe(self.manager.String(""))
         if len(new_args) == 1:
