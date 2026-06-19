@@ -339,9 +339,9 @@ class SmtPrinter(TreeWalker):
 
     def walk_re_union(self,formula, **kwargs):
         self.write("( re.union " )
-        self.walk(formula.arg(0))
-        self.write(" ")
-        self.walk(formula.arg(1))
+        for arg in formula.args():
+            self.walk(arg)
+            self.write(" ")
         self.write(")")
 
     def walk_re_diff(self,formula, **kwargs):
@@ -762,7 +762,14 @@ class SmtDagPrinter(DagWalker):
         return "( re.loop %s %d %d )" % (args[0], lo, hi)
 
     def walk_re_union(self,formula, args, **kwargs):
-        return "( re.union %s %s )" % (args[0], args[1])
+        sym = self._new_symbol()
+        self.openings += 1
+        self.write("(let ((%s (%s" % (sym, "re.union " ))
+        for s in args:
+            self.write(" ")
+            self.write(s)
+        self.write("))) ")
+        return sym
     
     def walk_re_diff(self,formula, args, **kwargs):
         return "( re.diff %s %s )" % (args[0], args[1])

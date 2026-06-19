@@ -931,9 +931,9 @@ def ReDiff(r1, r2):
     """Returns the difference of the languages accepted by r1 and r2."""
     return get_env().formula_manager.ReDiff(r1, r2)
 
-def ReUnion(r1, r2):
-    """Returns the union of the languages accepted by r1 and r2."""
-    return get_env().formula_manager.ReUnion(r1, r2)
+def ReUnion(*args):
+    """Returns the union of the languages accepted by the given regexes."""
+    return get_env().formula_manager.ReUnion(*args)
 
 def ReInter(r1, r2):
     """Returns the intersection of the languages accepted by r1 and r2."""

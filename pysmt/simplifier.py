@@ -1040,21 +1040,7 @@ class Simplifier(pysmt.walkers.DagWalker):
             return self.manager.StrToRe(self.manager.String(""))
         if len(new_args) == 1:
             return new_args[0]
-        # "abc" . "def" -> "abcdef"
-        merged = []
-        for r in new_args:
-            if (r.node_type() == op.STR_TO_RE and
-                    r.arg(0).is_string_constant() and
-                    merged and
-                    merged[-1].node_type() == op.STR_TO_RE and
-                    merged[-1].arg(0).is_string_constant()):
-                combined = merged[-1].arg(0).constant_value() + r.arg(0).constant_value()
-                merged[-1] = self.manager.StrToRe(self.manager.String(combined))
-            else:
-                merged.append(r)
-        if len(merged) == 1:
-            return merged[0]
-        return self.manager.ReConcat(*merged)
+        return self.manager.ReConcat(*new_args)
 
     def walk_re_kleene_star(self, formula, args, **kwargs):
         r = args[0]

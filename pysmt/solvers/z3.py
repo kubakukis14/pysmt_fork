@@ -383,7 +383,7 @@ class Z3Converter(Converter, DagWalker):
             z3.Z3_OP_RE_STAR: lambda args, expr: self.mgr.ReKleeneStar(args[0]),
             z3.Z3_OP_RE_PLUS: lambda args, expr: self.mgr.ReKleenePlus(args[0]),
             z3.Z3_OP_RE_OPTION: lambda args, expr: self.mgr.ReOpt(args[0]),
-            z3.Z3_OP_RE_UNION: lambda args, expr: self.mgr.ReUnion(args[0], args[1]),
+            z3.Z3_OP_RE_UNION: lambda args, expr: self.mgr.ReUnion(*args),
             z3.Z3_OP_RE_INTERSECT: lambda args, expr: self.mgr.ReInter(args[0], args[1]),
             z3.Z3_OP_RE_DIFF: lambda args, expr: self.mgr.ReDiff(args[0], args[1]),
             z3.Z3_OP_RE_RANGE: lambda args, expr: self.mgr.ReRange(args[0], args[1]),
@@ -1005,8 +1005,8 @@ class Z3Converter(Converter, DagWalker):
         return z3term
 
     def walk_re_union(self, formula, args, **kwargs):
-        z3term = z3.Union(z3.ReRef(args[0], self.ctx),
-                         z3.ReRef(args[1], self.ctx)).ast
+        z3_args = [z3.ReRef(a, self.ctx) for a in args]
+        z3term = z3.Union(*z3_args).ast
         z3.Z3_inc_ref(self.ctx.ref(), z3term)
         return z3term
 

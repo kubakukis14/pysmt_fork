@@ -339,9 +339,10 @@ class HRPrinter(TreeWalker):
 
     def walk_re_union(self, formula, **kwargs):
         self.write("re.union(" )
-        self.walk(formula.arg(0))
-        self.write(", ")
-        self.walk(formula.arg(1))
+        for arg in formula.args()[:-1]:
+            self.walk(arg)
+            self.write(", ")
+        self.walk(formula.args()[-1])
         self.write(")")
 
     def walk_re_diff(self, formula, **kwargs):

@@ -1113,13 +1113,16 @@ class FormulaManager(object):
         """
         return self.create_node(node_type=op.RE_DIFF, args=(r1, r2))
 
-    def ReUnion(self, r1, r2):
+    def ReUnion(self, *args):
         """Returns a regular expression that accepts the union of the
-        languages accepted by r1 and r2.
+        languages accepted by the given regexes.
 
-        where r1 and r2 are RegEx terms defined over a certain sort
+        where args are RegEx terms defined over a certain sort
         """
-        return self.create_node(node_type=op.RE_UNION, args=(r1, r2))
+        tuple_args = self._polymorph_args_to_tuple(args)
+        if len(tuple_args) <= 1:
+            raise TypeError("Cannot create a Re_Union without arguments.")
+        return self.create_node(node_type=op.RE_UNION, args=tuple_args)
 
     def ReInter(self, r1, r2):
         """Returns a regular expression that accepts the intersection of the

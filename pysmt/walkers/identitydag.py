@@ -272,7 +272,7 @@ class IdentityDagWalker(DagWalker):
         return self.mgr.ReDiff(args[0], args[1])
 
     def walk_re_union(self, formula, args, **kwargs):
-        return self.mgr.ReUnion(args[0], args[1])
+        return self.mgr.ReUnion(*args)
 
     def walk_re_inter(self, formula, args, **kwargs):
         return self.mgr.ReInter(args[0], args[1])
